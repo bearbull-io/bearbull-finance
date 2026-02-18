@@ -1,0 +1,35 @@
+.bearbull-embed-container {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+
+.bearbull-embed-container iframe {
+  width: 100%;
+  border: none;
+  display: block;
+}
+
+.bearbull-embed-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.bearbull-embed-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  color: var(--text-error);
+  font-size: 0.85rem;
+  padding: 1rem;
+  text-align: center;
+  border: 1px solid var(--text-error);
+  border-radius: 7px;
+}

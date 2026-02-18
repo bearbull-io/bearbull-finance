@@ -1,0 +1,10 @@
+{
+  "id": "bearbull-finance",
+  "name": "BearBull",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Embed BearBull financial charts (stock prices, income statements, balance sheets, etc.) inline in your notes.",
+  "author": "BearBull",
+  "authorUrl": "https://bearbull.com",
+  "isDesktopOnly": false
+}
