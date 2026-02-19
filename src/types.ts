@@ -1,4 +1,4 @@
-export const BASE_URL = "http://localhost:3000";
+export const BASE_URL = "https://www.bearbull.io";
 
 export interface BearBullSettings {
   apiKey: string;
