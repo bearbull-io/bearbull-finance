@@ -1,7 +1,8 @@
+export const BASE_URL = "https://www.bearbull.io";
+
 export interface BearBullSettings {
   apiKey: string;
-  baseUrl: string;
-  theme: "dark" | "light" | "auto";
+  theme: "dark" | "light" | "reading" | "auto";
   defaultPeriod: "A" | "Q";
   showTimeFrameBar: boolean;
   showTags: boolean;
@@ -14,7 +15,6 @@ export interface BearBullSettings {
 
 export const DEFAULT_SETTINGS: BearBullSettings = {
   apiKey: "",
-  baseUrl: "https://bearbull.com",
   theme: "auto",
   defaultPeriod: "A",
   showTimeFrameBar: true,
@@ -26,7 +26,7 @@ export const DEFAULT_SETTINGS: BearBullSettings = {
   iframeHeight: 400,
 };
 
-export type EmbedType = "CHART" | "IS" | "BS" | "CS" | "RB" | "IH";
+export type EmbedType = "CHART" | "IS" | "BS" | "CS" | "RB" | "IH" | "DIV" | "ES" | "FE" | "MC" | "EC" | "ESG" | "EPS" | "VR" | "CON";
 
 export interface ParsedEmbed {
   tickers: string[];

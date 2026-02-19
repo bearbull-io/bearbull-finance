@@ -1,126 +1,155 @@
-# BearBull Finance for Obsidian
+# BearBull Obsidian Plugin
 
-Embed interactive [BearBull](https://bearbull.com) financial charts directly in your Obsidian notes — stock prices, income statements, balance sheets, cashflow statements, revenue breakdowns, and institutional holders.
+## Introduction
+
+The BearBull Obsidian plugin embeds interactive financial data directly in your notes. Write a short code block and the plugin renders a chart inline — stock price charts, income statements, balance sheets, cashflow statements, revenue breakdowns, and more. All data stays up to date without leaving Obsidian.
+
+---
 
 ## Installation
 
-### From Obsidian Community Plugins
+**Option 1 — Community Plugins:**
 
-1. Open **Settings** → **Community Plugins** → **Browse**
-2. Search for **BearBull**
-3. Click **Install**, then **Enable**
+1. Open **Obsidian Settings** and go to **Community Plugins**.
+2. Click **Browse** and search for **BearBull**.
+3. Click **Install**, then **Enable**.
 
-### Manual Installation
+**Option 2 — Manual Install from GitHub:**
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/bearbull-io/bearbull-finance/releases/latest)
-2. Create a folder at `<vault>/.obsidian/plugins/bearbull-finance/`
-3. Copy the three files into that folder
-4. Enable the plugin in **Settings** → **Community Plugins**
+1. Download the latest release from [github.com/bearbull-io/bearbull-finance](https://github.com/bearbull-io/bearbull-finance).
+2. Extract the files into your vault's `.obsidian/plugins/bearbull-finance/` folder.
+3. Restart Obsidian and enable the plugin in **Settings > Community Plugins**.
+
+---
 
 ## Setup
 
-1. Get an embed API key at [bearbull.com/account/apiKeys](https://bearbull.com/account/apiKeys)
-2. Open **Settings** → **BearBull** and paste your API key
+After enabling the plugin, open its settings panel. The following options are available:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| API Key | — | Required. Get yours at [bearbull.io](https://www.bearbull.io) |
+| Theme | `auto` | `dark`, `light`, or `auto` (matches your Obsidian theme) |
+| Default Period | `A` | `A` (Annual) or `Q` (Quarterly) |
+| Show Time Frame Bar | `true` | Show or hide the annual/quarterly selector on embeds |
+| Default Currency | — | Currency code for conversion (e.g. `EUR`). Leave blank for no conversion |
+| Date Format | `yyyy-mm-dd` | Also: `dd.mm.yyyy`, `dd/mm/yyyy`, `mm/dd/yyyy` |
+| Default From | `today()-10Y` | Start date expression |
+| Default To | `today()` | End date expression |
+| Height | `400` | Embed height in pixels |
+
+Every setting acts as a default and can be overridden per embed.
+
+---
+
+## Embed Types
+
+### Price Charts
+
+| Type | Description |
+|------|-------------|
+| `CHART` | Candlestick chart (single ticker) or comparison line chart (multiple tickers) |
+
+### Financial Statements
+
+| Type | Description |
+|------|-------------|
+| `IS` | Income Statement |
+| `BS` | Balance Sheet |
+| `CS` | Cash Flow Statement |
+| `RB` | Revenue Breakdown |
+| `EPS` | Earnings Per Share |
+
+### Valuation & Market Data
+
+| Type | Description |
+|------|-------------|
+| `MC` | Market Cap & Enterprise Value |
+| `VR` | Valuation Ratios |
+
+### Earnings & Estimates
+
+| Type | Description |
+|------|-------------|
+| `ES` | Earnings Surprises |
+| `FE` | Analyst Estimates |
+
+### Dividends & ESG
+
+| Type | Description |
+|------|-------------|
+| `DIV` | Dividends |
+| `ESG` | ESG Rating |
+
+### Company Data
+
+| Type | Description |
+|------|-------------|
+| `EC` | Employee Count |
+| `IH` | Insider Holdings |
+
+---
 
 ## Syntax
 
-### Code Block
-
-Use a `bb` code block to embed one or more charts:
+Each line is a `key: value` pair inside a fenced `bb` code block. Only `ticker` and `type` are required — everything else is optional and falls back to your plugin settings.
 
 ````
 ```bb
-AAPL::IS::today()-10Y::today()::revenue,netIncome
+ticker: AAPL
+type: IS
+period: Q
+from: today()-5Y
+to: today()
 ```
 ````
 
-### Wiki Link
+### Format auto-detection
 
-Use wiki-link syntax for inline single embeds:
+If any non-empty line in a `bb` block matches `key: value` (contains `:` but not `::`), the entire block is treated as key-value format.
 
-```
-![[AAPL::CHART::today()-3Y::today()]]
-```
+---
 
-### Format
+## Options Reference
 
-```
-TICKERS::TYPE(::SUBTYPE)?(::FROM)?(::TO)?(::TAGS)?({OPTIONS})?
-```
+All options are optional except `ticker` (or `constituents` for CON) and `type`. Defaults come from plugin settings.
 
-| Component    | Required | Description                                   | Example                     |
-| ------------ | -------- | --------------------------------------------- | --------------------------- |
-| **TICKERS**  | Yes      | One or more symbols, comma-separated          | `AAPL` or `AAPL,MSFT`      |
-| **TYPE**     | Yes      | Chart type (see below)                        | `IS`                        |
-| **SUBTYPE**  | RB only  | `PRO` (product) or `GEO` (geographic)         | `PRO`                       |
-| **FROM**     | No       | Start date expression, or `-` to skip         | `today()-5Y`                |
-| **TO**       | No       | End date expression, or `-` to skip           | `today()`                   |
-| **TAGS**     | No       | Comma-separated metric names                  | `revenue,netIncome`         |
-| **OPTIONS**  | No       | Key-value pairs in braces                     | `{period=Q,height=500}`     |
+| Option | Values | Description |
+|--------|--------|-------------|
+| `ticker` | e.g. `AAPL` or `AAPL,GOOG` | One or more stock tickers (comma-separated) |
+| `constituents` | e.g. `S&P500` or `S&P500,DJI` | Index names for CON type (comma-separated) |
+| `type` | `CHART` `IS` `BS` `CS` `RB` `EPS` `MC` `VR` `ES` `FE` `DIV` `ESG` `EC` `IH` `CON` | Embed type |
+| `subtype` | `PRO` or `GEO` | Revenue Breakdown: by product or geography |
+| `period` | `A` `Q` `ZOOMA` `ZOOMQ` | Data period |
+| `from` | `today()-NY` or `YYYY-MM-DD` | Start date |
+| `to` | `today()` or `YYYY-MM-DD` | End date |
+| `theme` | `dark` `light` `reading` | Override the color theme |
+| `currency` | e.g. `USD`, `EUR`, `CHF` | Convert values to a specific currency |
+| `dateformat` | `yyyy-mm-dd` `dd.mm.yyyy` `dd/mm/yyyy` `mm/dd/yyyy` | Date display format |
+| `timeframebar` | `true` or `false` | Show/hide the period selector bar |
+| `tf` | `true` or `false` | Shorthand for `timeframebar` |
+| `height` | e.g. `600` | Embed height in pixels |
 
-### Chart Types
+### Period values
 
-| Code    | Description              |
-| ------- | ------------------------ |
-| `CHART` | Stock price chart        |
-| `IS`    | Income statement         |
-| `BS`    | Balance sheet            |
-| `CS`    | Cashflow statement       |
-| `RB`    | Revenue breakdown        |
-| `IH`    | Institutional holders    |
+| Value | Description |
+|-------|-------------|
+| `A` | Annual data (default) |
+| `Q` | Quarterly data |
+| `ZOOMA` | Annual data with zoom controls |
+| `ZOOMQ` | Quarterly data with zoom controls |
 
-### Date Expressions
+Period is supported by: `IS`, `BS`, `CS`, `RB`, `EPS`.
 
-- `today()` — current date
-- `today()-5Y` — 5 years ago (also `NM` for months, `ND` for days)
-- `2024-01-01` — specific ISO date
-- `-` — skip (use plugin default)
+### Date expressions
 
-### Inline Options
+| Expression | Result |
+|------------|--------|
+| `today()` | Current date |
+| `today()-5Y` | 5 years ago |
+| `today()-6M` | 6 months ago |
+| `today()-30D` | 30 days ago |
+| `2024-01-01` | Specific ISO date |
 
-Append `{key=value,...}` to override settings per embed:
-
-| Option         | Values               | Description                    |
-| -------------- | -------------------- | ------------------------------ |
-| `period`       | `A`, `Q`             | Annual or quarterly data       |
-| `theme`        | `dark`, `light`      | Override chart theme           |
-| `height`       | Number (px)          | Chart height in pixels         |
-| `tf`           | `true`, `false`      | Show/hide time frame bar       |
-| `tags`         | Comma-separated      | Metric tags to display         |
-| `from` / `to`  | Date expression      | Override date range            |
-| `currency`     | Currency code        | Convert values (e.g. `EUR`)    |
-| `dateformat`   | Format string        | Date display format            |
-
-### Examples
-
-```
-AAPL::CHART::today()-5Y::today()
-AAPL::IS::today()-10Y::today()::revenue,netIncome
-AAPL::BS::today()-10Y::today()::totalAssets,totalLiabilities
-AAPL::CS{period=Q,height=600}
-AAPL::RB::PRO::today()-10Y::today()
-AAPL::RB::GEO
-AAPL::IH
-AAPL,MSFT::CHART::today()-3Y::today()
-```
-
-## Settings
-
-| Setting              | Default           | Description                                    |
-| -------------------- | ----------------- | ---------------------------------------------- |
-| API Key              | —                 | Your BearBull embed API key                    |
-| Theme                | Auto              | Dark, Light, or Auto (matches Obsidian theme)  |
-| Default Period       | Annual            | Annual or Quarterly for financial statements   |
-| Show Time Frame Bar  | On                | Show the annual/quarterly selector             |
-| Show Tags            | On                | Show the metric tag selector                   |
-| Default Currency     | —                 | Currency conversion (leave blank for original) |
-| Date Format          | yyyy-mm-dd        | Date display format                            |
-| Default From Date    | today()-10Y       | Default start date                             |
-| Default To Date      | today()           | Default end date                               |
-| Iframe Height        | 400               | Default embed height in pixels                 |
-| Base URL             | bearbull.com      | BearBull server URL (advanced)                 |
-
-## Support
-
-- Issues: [GitHub Issues](https://github.com/bearbull-io/bearbull-finance/issues)
-- Website: [bearbull.com](https://bearbull.com)
+> [!tip]
+> Dates resolve at render time, so `today()-5Y` always shows the last 5 years of data.
