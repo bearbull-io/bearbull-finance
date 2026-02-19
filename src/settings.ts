@@ -15,9 +15,8 @@ export class BearBullSettingTab extends PluginSettingTab {
 
     containerEl.createEl("h2", { text: "BearBull" });
 
-    new Setting(containerEl)
+    const apiKeySetting = new Setting(containerEl)
       .setName("API Key")
-      .setDesc("Your BearBull embed API key. Get one at bearbull.com/account/apiKeys.")
       .addText((text) =>
         text
           .setPlaceholder("bb_embed_...")
@@ -29,6 +28,12 @@ export class BearBullSettingTab extends PluginSettingTab {
             });
           })
       );
+    apiKeySetting.descEl.appendText("Your BearBull embed API key. Get one at ");
+    apiKeySetting.descEl.createEl("a", {
+      text: "www.bearbull.io",
+      href: "https://www.bearbull.io",
+    });
+    apiKeySetting.descEl.appendText(".");
 
     new Setting(containerEl)
       .setName("Theme")
@@ -38,9 +43,10 @@ export class BearBullSettingTab extends PluginSettingTab {
           .addOption("auto", "Auto")
           .addOption("dark", "Dark")
           .addOption("light", "Light")
+          .addOption("reading", "Reading")
           .setValue(this.plugin.settings.theme)
           .onChange(async (value) => {
-            this.plugin.settings.theme = value as "dark" | "light" | "auto";
+            this.plugin.settings.theme = value as "dark" | "light" | "reading" | "auto";
             await this.plugin.saveSettings();
           })
       );
@@ -67,18 +73,6 @@ export class BearBullSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.showTimeFrameBar)
           .onChange(async (value) => {
             this.plugin.settings.showTimeFrameBar = value;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(containerEl)
-      .setName("Show Tags")
-      .setDesc("Show the tag/metric selector on financial statements.")
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.plugin.settings.showTags)
-          .onChange(async (value) => {
-            this.plugin.settings.showTags = value;
             await this.plugin.saveSettings();
           })
       );
@@ -118,6 +112,21 @@ export class BearBullSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
+      .setName("Thousand Separator")
+      .setDesc("Character used to separate thousands in numbers.")
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("'", "Apostrophe (')")
+          .addOption(",", "Comma (,)")
+          .addOption(".", "Period (.)")
+          .setValue(this.plugin.settings.thousandSeparator)
+          .onChange(async (value) => {
+            this.plugin.settings.thousandSeparator = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
       .setName("Default From Date")
       .setDesc("Default start date. Supports: YYYY-MM-DD, today()-NY, today()-NM, today()-ND.")
       .addText((text) =>
@@ -149,7 +158,7 @@ export class BearBullSettingTab extends PluginSettingTab {
     containerEl.createEl("h3", { text: "Advanced" });
 
     new Setting(containerEl)
-      .setName("Iframe Height")
+      .setName("Chart Height")
       .setDesc("Height in pixels for embeds.")
       .addText((text) =>
         text
@@ -165,18 +174,5 @@ export class BearBullSettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(containerEl)
-      .setName("Base URL")
-      .setDesc("BearBull website URL (default: https://bearbull.com).")
-      .addText((text) =>
-        text
-          .setValue(this.plugin.settings.baseUrl)
-          .then((t) => {
-            t.inputEl.addEventListener("blur", async () => {
-              this.plugin.settings.baseUrl = t.inputEl.value.trim();
-              await this.plugin.saveSettings();
-            });
-          })
-      );
   }
 }
