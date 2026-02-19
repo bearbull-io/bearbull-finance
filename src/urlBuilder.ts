@@ -173,7 +173,8 @@ export function buildEmbedUrl(parsed: ParsedEmbed, settings: BearBullSettings, o
   }
 
   // Height (iframe attribute, but also sent as param if specified)
-  if (parsed.options.height) {
+  // PROFILE has its own fixed height — don't send a constraint
+  if (parsed.options.height && parsed.type !== "PROFILE") {
     url.searchParams.set("height", parsed.options.height);
   }
 
@@ -181,6 +182,10 @@ export function buildEmbedUrl(parsed: ParsedEmbed, settings: BearBullSettings, o
 }
 
 export function getIframeHeight(parsed: ParsedEmbed, settings: BearBullSettings): number {
+  // PROFILE has its own fixed height — ignore user override
+  if (parsed.type === "PROFILE") {
+    return settings.iframeHeight;
+  }
   if (parsed.options.height) {
     return parseInt(parsed.options.height, 10) || settings.iframeHeight;
   }
