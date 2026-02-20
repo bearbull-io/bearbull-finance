@@ -24,15 +24,23 @@ function getOverlay(): HTMLDivElement {
 // Cache: embedId → { iframe, url, loaded, visible, placeholder }
 // ---------------------------------------------------------------------------
 
+const TABLE_TYPES = new Set([
+  "INCOME_STATEMENT_TABLE",
+  "BALANCE_SHEET_TABLE",
+  "CASHFLOW_STATEMENT_TABLE",
+  "REVENUE_BREAKDOWN_TABLE",
+]);
+
 interface CacheEntry {
   wrapper: HTMLDivElement;
   iframe: HTMLIFrameElement;
-  guard: HTMLDivElement;
+  guard: HTMLDivElement | null;
   url: string;
   loaded: boolean;
   visible: boolean;
   placeholder: HTMLElement | null;
   height: number;
+  isTable: boolean;
 }
 
 const cache = new Map<string, CacheEntry>();
@@ -97,14 +105,14 @@ function findScrollParent(el: HTMLElement | null): HTMLElement | null {
 /** Remove .interactive from all guards, re-enabling scroll protection */
 function deactivateAllGuards(): void {
   for (const entry of cache.values()) {
-    entry.guard.classList.remove("interactive");
+    entry.guard?.classList.remove("interactive");
   }
 }
 
 function onDocumentMousedown(e: MouseEvent): void {
   // If click is inside an active (interactive) wrapper, leave it active
   for (const entry of cache.values()) {
-    if (entry.guard.classList.contains("interactive") && entry.wrapper.contains(e.target as Node)) {
+    if (entry.guard?.classList.contains("interactive") && entry.wrapper.contains(e.target as Node)) {
       return;
     }
   }
@@ -113,6 +121,26 @@ function onDocumentMousedown(e: MouseEvent): void {
 
 function onDocumentKeydown(e: KeyboardEvent): void {
   if (e.key === "Escape") deactivateAllGuards();
+}
+
+function onScrollMessage(e: MessageEvent): void {
+  if (e.origin !== BASE_URL) return;
+  const d = e.data;
+  if (
+    !d ||
+    d.type !== "bearbull-scroll" ||
+    typeof d.deltaX !== "number" ||
+    typeof d.deltaY !== "number"
+  ) return;
+
+  for (const entry of cache.values()) {
+    if (entry.iframe.contentWindow === e.source) {
+      if (entry.isTable) return; // guard handles tables
+      const sp = findScrollParent(entry.placeholder);
+      if (sp) sp.scrollBy({ top: d.deltaY, left: d.deltaX });
+      return;
+    }
+  }
 }
 
 // Listeners — attached once when the overlay is created
@@ -129,6 +157,9 @@ function attachListeners(): void {
   // Guard deactivation listeners
   document.addEventListener("mousedown", onDocumentMousedown, true);
   document.addEventListener("keydown", onDocumentKeydown);
+
+  // postMessage bridge for iframe scroll forwarding
+  window.addEventListener("message", onScrollMessage);
 }
 
 function detachListeners(): void {
@@ -139,6 +170,7 @@ function detachListeners(): void {
   window.removeEventListener("resize", requestSync);
   document.removeEventListener("mousedown", onDocumentMousedown, true);
   document.removeEventListener("keydown", onDocumentKeydown);
+  window.removeEventListener("message", onScrollMessage);
 }
 
 // ---------------------------------------------------------------------------
@@ -227,6 +259,8 @@ export function renderEmbed(
   const loadingEl = placeholder.createDiv({ cls: "bearbull-embed-loading" });
   loadingEl.setText("Loading BearBull chart...");
 
+  const isTable = TABLE_TYPES.has(parsed.type);
+
   const createIframe = () => {
     const ol = getOverlay();
 
@@ -243,25 +277,28 @@ export function renderEmbed(
     iframe.setAttribute("allowtransparency", "true");
     iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
 
-    // Scroll guard — intercepts wheel events, click to interact
-    const guard = document.createElement("div");
-    guard.className = "bearbull-scroll-guard";
+    // Scroll guard — only for table embeds
+    let guard: HTMLDivElement | null = null;
+    if (isTable) {
+      guard = document.createElement("div");
+      guard.className = "bearbull-scroll-guard";
 
-    guard.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      const scrollParent = findScrollParent(entry.placeholder);
-      if (scrollParent) {
-        scrollParent.scrollBy({ top: e.deltaY, left: e.deltaX });
-      }
-    }, { passive: false });
+      guard.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        const scrollParent = findScrollParent(entry.placeholder);
+        if (scrollParent) {
+          scrollParent.scrollBy({ top: e.deltaY, left: e.deltaX });
+        }
+      }, { passive: false });
 
-    guard.addEventListener("click", (e) => {
-      e.stopPropagation();
-      guard.classList.add("interactive");
-    });
+      guard.addEventListener("click", (e) => {
+        e.stopPropagation();
+        guard!.classList.add("interactive");
+      });
+    }
 
     wrapper.appendChild(iframe);
-    wrapper.appendChild(guard);
+    if (guard) wrapper.appendChild(guard);
 
     const entry: CacheEntry = {
       wrapper,
@@ -272,6 +309,7 @@ export function renderEmbed(
       visible: true,
       placeholder,
       height,
+      isTable,
     };
     cache.set(embedId, entry);
 
