@@ -3,7 +3,7 @@ import type { BearBullSettings } from "./types";
 import { DEFAULT_SETTINGS } from "./types";
 import { BearBullSettingTab } from "./settings";
 import { parseBlock } from "./parser";
-import { renderEmbed, cleanupOverlay } from "./renderer";
+import { renderEmbed, cleanupOverlay, onActiveLeafChange, onLayoutChange } from "./renderer";
 
 function getObsidianTheme(): string {
   return document.body.classList.contains("theme-dark") ? "dark" : "light";
@@ -16,6 +16,14 @@ export default class BearBullPlugin extends Plugin {
     await this.loadSettings();
 
     this.addSettingTab(new BearBullSettingTab(this.app, this));
+
+    this.registerEvent(
+      this.app.workspace.on("active-leaf-change", onActiveLeafChange)
+    );
+
+    this.registerEvent(
+      this.app.workspace.on("layout-change", onLayoutChange)
+    );
 
     this.registerMarkdownCodeBlockProcessor("bb", (source, el, ctx) => {
       const results = parseBlock(source);

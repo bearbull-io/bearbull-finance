@@ -49,6 +49,20 @@ const cache = new Map<string, CacheEntry>();
 const verifiedHosts = new Set<string>();
 
 // ---------------------------------------------------------------------------
+// ResizeObserver — triggers sync when any placeholder's container resizes
+// (sidebar toggle, pane drag-resize, CSS transitions, etc.)
+// ---------------------------------------------------------------------------
+
+let resizeObserver: ResizeObserver | null = null;
+
+function getResizeObserver(): ResizeObserver {
+  if (!resizeObserver) {
+    resizeObserver = new ResizeObserver(() => requestSync());
+  }
+  return resizeObserver;
+}
+
+// ---------------------------------------------------------------------------
 // Position sync — single rAF loop that aligns iframes over their placeholders
 // ---------------------------------------------------------------------------
 
@@ -58,6 +72,40 @@ function requestSync(): void {
   if (syncScheduled) return;
   syncScheduled = true;
   requestAnimationFrame(syncPositions);
+}
+
+/** Resolve the max width the embed should occupy */
+function getContentWidth(el: HTMLElement): number {
+  // Live preview: .cm-sizer is constrained by max-width: var(--file-line-width)
+  // Reading mode: .markdown-preview-sizer is similarly constrained
+  for (const sel of [".cm-sizer", ".cm-content", ".markdown-preview-sizer"]) {
+    const ancestor = el.closest(sel) as HTMLElement | null;
+    if (ancestor) {
+      const style = getComputedStyle(ancestor);
+      const pl = parseFloat(style.paddingLeft) || 0;
+      const pr = parseFloat(style.paddingRight) || 0;
+      const w = ancestor.clientWidth - pl - pr;
+      if (w > 0 && w < window.innerWidth) return w;
+    }
+  }
+
+  // Fallback: read --file-line-width directly from computed style
+  const flw = getComputedStyle(el).getPropertyValue("--file-line-width").trim();
+  if (flw) {
+    const px = parseFloat(flw);
+    if (!isNaN(px) && px > 0) return px;
+  }
+
+  return window.innerWidth;
+}
+
+/** Find the scrollable content bounds so we can clip iframes that overflow */
+function getClipBounds(el: HTMLElement): DOMRect | null {
+  for (const sel of [".cm-scroller", ".markdown-preview-view"]) {
+    const ancestor = el.closest(sel) as HTMLElement | null;
+    if (ancestor) return ancestor.getBoundingClientRect();
+  }
+  return null;
 }
 
 function syncPositions(): void {
@@ -71,17 +119,47 @@ function syncPositions(): void {
 
     const rect = entry.placeholder.getBoundingClientRect();
 
-    // Hide if placeholder is off-screen or has zero dimensions
     if (rect.width === 0 || rect.height === 0) {
       entry.wrapper.style.display = "none";
       continue;
     }
 
+    // Placeholder hidden or detached (e.g. tab switched away)
+    if (!entry.placeholder.isConnected || entry.placeholder.offsetParent === null) {
+      entry.wrapper.style.display = "none";
+      continue;
+    }
+
+    // Clamp width to the readable content area
+    const contentWidth = getContentWidth(entry.placeholder);
+    const width = Math.min(rect.width, contentWidth, window.innerWidth - rect.left);
+
     entry.wrapper.style.display = "block";
     entry.wrapper.style.left = `${rect.left}px`;
     entry.wrapper.style.top = `${rect.top}px`;
-    entry.wrapper.style.width = `${rect.width}px`;
+    entry.wrapper.style.width = `${width}px`;
     entry.wrapper.style.height = `${rect.height}px`;
+
+    // Clip portions that extend outside the scrollable content area
+    const bounds = getClipBounds(entry.placeholder);
+    if (bounds) {
+      const clipTop = Math.max(0, bounds.top - rect.top);
+      const clipRight = Math.max(0, (rect.left + width) - bounds.right);
+      const clipBottom = Math.max(0, (rect.top + rect.height) - bounds.bottom);
+      const clipLeft = Math.max(0, bounds.left - rect.left);
+
+      if (clipTop + clipBottom >= rect.height || clipLeft + clipRight >= width) {
+        entry.wrapper.style.display = "none";
+        continue;
+      }
+
+      entry.wrapper.style.clipPath =
+        (clipTop > 0 || clipRight > 0 || clipBottom > 0 || clipLeft > 0)
+          ? `inset(${clipTop}px ${clipRight}px ${clipBottom}px ${clipLeft}px)`
+          : "";
+    } else {
+      entry.wrapper.style.clipPath = "";
+    }
   }
 }
 
@@ -194,6 +272,7 @@ export class BearBullEmbed extends MarkdownRenderChild {
     const entry = cache.get(this.embedId);
     if (!entry) return;
 
+    if (entry.placeholder) resizeObserver?.unobserve(entry.placeholder);
     entry.visible = false;
     entry.placeholder = null;
     entry.wrapper.style.display = "none";
@@ -236,6 +315,7 @@ export function renderEmbed(
   if (cached && cached.url === url) {
     cached.visible = true;
     cached.placeholder = placeholder;
+    getResizeObserver().observe(placeholder);
 
     if (!cached.loaded) {
       const loadingEl = placeholder.createDiv({ cls: "bearbull-embed-loading" });
@@ -312,6 +392,7 @@ export function renderEmbed(
       isTable,
     };
     cache.set(embedId, entry);
+    getResizeObserver().observe(placeholder);
 
     iframe.addEventListener("load", () => {
       loadingEl.remove();
@@ -345,10 +426,24 @@ export function renderEmbed(
 }
 
 // ---------------------------------------------------------------------------
+// Active-leaf-change — called when Obsidian switches tabs
+// ---------------------------------------------------------------------------
+
+export function onActiveLeafChange(): void {
+  requestSync();
+}
+
+export function onLayoutChange(): void {
+  requestSync();
+}
+
+// ---------------------------------------------------------------------------
 // Cleanup — called from plugin onunload()
 // ---------------------------------------------------------------------------
 
 export function cleanupOverlay(): void {
+  resizeObserver?.disconnect();
+  resizeObserver = null;
   cache.clear();
   verifiedHosts.clear();
   detachListeners();
