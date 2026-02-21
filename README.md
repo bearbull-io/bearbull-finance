@@ -4,6 +4,8 @@
 
 The BearBull Obsidian plugin embeds interactive financial data directly in your notes. Write a short code block and the plugin renders a chart inline — stock price charts, income statements, balance sheets, cashflow statements, revenue breakdowns, and more. All data stays up to date without leaving Obsidian.
 
+> For full documentation and examples, see the [BearBull Obsidian Guide](https://www.bearbull.io/blog/Guide/Obsidian-Note).
+
 ---
 
 ## Installation
@@ -46,6 +48,34 @@ Every setting acts as a default and can be overridden per embed.
 ## Embeds Reference
 
 Create a fenced code block with the language tag `bb`. Inside, use `type:` to specify the embed and `ticker:` for the stock symbol. All other fields are optional and fall back to your plugin settings.
+
+### Type Aliases
+
+Every embed type has a short alias you can use instead of the full name:
+
+| Alias | Embed Type |
+|-------|------------|
+| `SC` | `CHART` |
+| `CC` | `CHART_COMPLEX` |
+| `PRF` | `PROFILE` |
+| `IS` | `INCOME_STATEMENT` |
+| `BS` | `BALANCE_SHEET` |
+| `CS`, `CF` | `CASHFLOW_STATEMENT` |
+| `RB` | `REVENUE_BREAKDOWN` |
+| `CON` | `CONSTITUENTS` |
+| `FTE` | `FULLTIME_EMPLOYEES` |
+| `IH`, `INST` | `INSTITUTIONAL_OWNERSHIP` |
+| `EPS` | `EPS` |
+| `VR`, `RATIO` | `VALUATION_RATIOS` |
+| `DIV` | `DIVIDENDS` |
+| `ES`, `ESURP` | `EARNINGS_SURPRISE` |
+| `AE` | `FINANCIAL_ESTIMATES` |
+| `MC`, `MCAP` | `MARKET_CAP` |
+| `ESG` | `ESG_SCORE` |
+| `IST` | `INCOME_STATEMENT_TABLE` |
+| `BST` | `BALANCE_SHEET_TABLE` |
+| `CST`, `CFT` | `CASHFLOW_STATEMENT_TABLE` |
+| `RBT`, `REVT` | `REVENUE_BREAKDOWN_TABLE` |
 
 ---
 
@@ -359,19 +389,22 @@ Every embed accepts the following options. Only specify options that differ from
 |--------|--------|---------|-------------|
 | `type` | See embed types above | — | **Required.** The embed type |
 | `ticker` / `tickers` | Comma or pipe separated | — | **Required.** Stock symbol(s) |
-| `subtype` | `PRODUCT`, `GEOGRAPHY` | — | For revenue breakdown embeds only |
+| `subtype` | `PRODUCT` (or `PRO`), `GEOGRAPHY` (or `GEO`) | — | For revenue breakdown embeds only |
 | `period` | `A`, `Q` | `A` | Annual or Quarterly |
 | `from` | Date or expression | `today()-10Y` | Start date |
 | `to` | Date or expression | `today()` | End date |
 | `theme` | `auto`, `dark`, `light`, `reading` | `auto` | Color theme |
 | `currency` | ISO code (e.g. `EUR`, `CHF`) | — | Convert values to this currency |
 | `height` | Number | `400` | Chart height in pixels |
-| `timeframebar` | `true`, `false` | `true` | Show period selector |
+| `timeframebar` (or `tf`) | `true`, `false` | `true` | Show period selector |
 | `dateformat` | `mm/dd/yyyy`, `dd.mm.yyyy`, `dd/mm/yyyy`, `yyyy-mm-dd` | `mm/dd/yyyy` | Date display format |
 | `thousandseparator` | `'`, `,`, `.` | `'` | Thousands grouping character |
 | `tags` | Comma-separated metric keys | — | Pre-select specific data series |
 | `indicators` | Comma-separated | — | `CHART_COMPLEX` only: `SMA`, `EPS`, `REVENUE`, `EARNINGS_SURPRISE`, `INSIDER`, `SENATE` |
 | `insider` | Name string | — | Filter insider trading by name (requires `INSIDER` indicator) |
 | `senate` | Name string | — | Filter senate trading by name (requires `SENATE` indicator) |
+| `table` | `true`, `false` | — | `CHART_COMPLEX` only: show data table below chart |
+| `range` | Range string | — | `CONSTITUENTS` only: performance time range |
+| `view` | View string | — | `INSTITUTIONAL_OWNERSHIP` only: display view mode |
 
 **Date expressions:** Use `today()` for the current date, or subtract time with `today()-5Y`, `today()-6M`, `today()-30D`.

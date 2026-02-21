@@ -5,6 +5,8 @@ import { BearBullSettingTab } from "./settings";
 import { parseBlock } from "./parser";
 import { renderEmbed, cleanupOverlay, onActiveLeafChange, onLayoutChange } from "./renderer";
 
+const SECRET_KEY_API = "bearbull-key";
+
 function getObsidianTheme(): string {
   return document.body.classList.contains("theme-dark") ? "dark" : "light";
 }
@@ -54,10 +56,26 @@ export default class BearBullPlugin extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const data = await this.loadData();
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+
+    // Migration: move apiKey from data.json → SecretStorage
+    if (data?.apiKey) {
+      this.app.secretStorage.setSecret(SECRET_KEY_API, data.apiKey);
+      delete data.apiKey;
+      await this.saveData(data);
+    }
+
+    // Load apiKey from SecretStorage
+    this.settings.apiKey = this.app.secretStorage.getSecret(SECRET_KEY_API) ?? "";
   }
 
   async saveSettings() {
-    await this.saveData(this.settings);
+    // apiKey → SecretStorage only
+    this.app.secretStorage.setSecret(SECRET_KEY_API, this.settings.apiKey);
+
+    // Everything else → data.json (exclude apiKey)
+    const { apiKey, ...rest } = this.settings;
+    await this.saveData(rest);
   }
 }

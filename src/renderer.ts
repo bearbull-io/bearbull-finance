@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, requestUrl } from "obsidian";
+import { MarkdownRenderChild, Platform, requestUrl } from "obsidian";
 import { BASE_URL } from "./types";
 import type { ParsedEmbed, BearBullSettings } from "./types";
 import { buildEmbedUrl, getIframeHeight } from "./urlBuilder";
@@ -238,6 +238,9 @@ function attachListeners(): void {
 
   // postMessage bridge for iframe scroll forwarding
   window.addEventListener("message", onScrollMessage);
+
+  // postMessage bridge for iframe-reported errors (invalid API key, etc.)
+  window.addEventListener("message", onErrorMessage);
 }
 
 function detachListeners(): void {
@@ -249,6 +252,7 @@ function detachListeners(): void {
   document.removeEventListener("mousedown", onDocumentMousedown, true);
   document.removeEventListener("keydown", onDocumentKeydown);
   window.removeEventListener("message", onScrollMessage);
+  window.removeEventListener("message", onErrorMessage);
 }
 
 // ---------------------------------------------------------------------------
@@ -297,6 +301,13 @@ export function renderEmbed(
   if (!settings.apiKey) {
     const errorEl = container.createDiv({ cls: "bearbull-embed-error" });
     errorEl.setText("BearBull API key not configured. Set it in Settings → BearBull.");
+    return null;
+  }
+
+  // Iframes are blocked on mobile (Capacitor/WKWebView) — show info message
+  if (Platform.isMobile) {
+    const info = container.createDiv({ cls: "bearbull-embed-info" });
+    info.setText("BearBull embeds are only available on desktop.");
     return null;
   }
 
@@ -461,4 +472,34 @@ function showError(loadingEl: HTMLElement): void {
   loadingEl.setText("Could not connect to BearBull");
   loadingEl.classList.add("bearbull-embed-error");
   loadingEl.classList.remove("bearbull-embed-loading");
+  // Collapse placeholder so error shows at natural compact size
+  const placeholder = loadingEl.parentElement;
+  if (placeholder) placeholder.style.height = "";
+}
+
+function onErrorMessage(e: MessageEvent): void {
+  if (e.origin !== BASE_URL) return;
+  const d = e.data;
+  if (!d || d.type !== "bearbull-embed-error" || typeof d.error !== "string") return;
+
+  for (const [embedId, entry] of cache.entries()) {
+    if (entry.iframe.contentWindow === e.source) {
+      collapseToError(embedId, entry, d.error);
+      return;
+    }
+  }
+}
+
+function collapseToError(embedId: string, entry: CacheEntry, message: string): void {
+  entry.wrapper.remove();
+  cache.delete(embedId);
+
+  if (entry.placeholder) {
+    entry.placeholder.style.height = "";
+    entry.placeholder.textContent = "";
+    const errorEl = document.createElement("div");
+    errorEl.className = "bearbull-embed-error";
+    errorEl.textContent = message;
+    entry.placeholder.appendChild(errorEl);
+  }
 }

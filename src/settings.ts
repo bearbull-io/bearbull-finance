@@ -16,12 +16,14 @@ export class BearBullSettingTab extends PluginSettingTab {
     containerEl.createEl("h2", { text: "BearBull" });
 
     const apiKeySetting = new Setting(containerEl)
-      .setName("API Key")
+      .setName("BearBull Key")
       .addText((text) =>
         text
           .setPlaceholder("bb_embed_...")
           .setValue(this.plugin.settings.apiKey)
           .then((t) => {
+            t.inputEl.type = "password";
+            t.inputEl.autocomplete = "off";
             t.inputEl.addEventListener("blur", async () => {
               this.plugin.settings.apiKey = t.inputEl.value.trim();
               await this.plugin.saveSettings();

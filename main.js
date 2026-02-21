@@ -52,6 +52,8 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
     containerEl.createEl("h2", { text: "BearBull" });
     const apiKeySetting = new import_obsidian.Setting(containerEl).setName("API Key").addText(
       (text) => text.setPlaceholder("bb_embed_...").setValue(this.plugin.settings.apiKey).then((t) => {
+        t.inputEl.type = "password";
+        t.inputEl.autocomplete = "off";
         t.inputEl.addEventListener("blur", async () => {
           this.plugin.settings.apiKey = t.inputEl.value.trim();
           await this.plugin.saveSettings();
@@ -610,6 +612,7 @@ function attachListeners() {
   document.addEventListener("mousedown", onDocumentMousedown, true);
   document.addEventListener("keydown", onDocumentKeydown);
   window.addEventListener("message", onScrollMessage);
+  window.addEventListener("message", onErrorMessage);
 }
 function detachListeners() {
   if (!listenersAttached) return;
@@ -619,6 +622,7 @@ function detachListeners() {
   document.removeEventListener("mousedown", onDocumentMousedown, true);
   document.removeEventListener("keydown", onDocumentKeydown);
   window.removeEventListener("message", onScrollMessage);
+  window.removeEventListener("message", onErrorMessage);
 }
 var BearBullEmbed = class extends import_obsidian2.MarkdownRenderChild {
   constructor(containerEl, embedId) {
@@ -645,6 +649,11 @@ function renderEmbed(container, parsed, settings, obsidianTheme, embedId) {
   if (!settings.apiKey) {
     const errorEl = container.createDiv({ cls: "bearbull-embed-error" });
     errorEl.setText("BearBull API key not configured. Set it in Settings \u2192 BearBull.");
+    return null;
+  }
+  if (import_obsidian2.Platform.isMobile) {
+    const info = container.createDiv({ cls: "bearbull-embed-info" });
+    info.setText("BearBull embeds are only available on desktop.");
     return null;
   }
   const url = buildEmbedUrl(parsed, settings, obsidianTheme);
@@ -761,9 +770,35 @@ function showError(loadingEl) {
   loadingEl.setText("Could not connect to BearBull");
   loadingEl.classList.add("bearbull-embed-error");
   loadingEl.classList.remove("bearbull-embed-loading");
+  const placeholder = loadingEl.parentElement;
+  if (placeholder) placeholder.style.height = "";
+}
+function onErrorMessage(e) {
+  if (e.origin !== BASE_URL) return;
+  const d = e.data;
+  if (!d || d.type !== "bearbull-embed-error" || typeof d.error !== "string") return;
+  for (const [embedId, entry] of cache.entries()) {
+    if (entry.iframe.contentWindow === e.source) {
+      collapseToError(embedId, entry, d.error);
+      return;
+    }
+  }
+}
+function collapseToError(embedId, entry, message) {
+  entry.wrapper.remove();
+  cache.delete(embedId);
+  if (entry.placeholder) {
+    entry.placeholder.style.height = "";
+    entry.placeholder.textContent = "";
+    const errorEl = document.createElement("div");
+    errorEl.className = "bearbull-embed-error";
+    errorEl.textContent = message;
+    entry.placeholder.appendChild(errorEl);
+  }
 }
 
 // src/main.ts
+var SECRET_KEY_API = "api-key";
 function getObsidianTheme() {
   return document.body.classList.contains("theme-dark") ? "dark" : "light";
 }
@@ -800,9 +835,18 @@ var BearBullPlugin = class extends import_obsidian3.Plugin {
     cleanupOverlay();
   }
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const data = await this.loadData();
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+    if (data?.apiKey) {
+      this.app.secretStorage.setSecret(SECRET_KEY_API, data.apiKey);
+      delete data.apiKey;
+      await this.saveData(data);
+    }
+    this.settings.apiKey = this.app.secretStorage.getSecret(SECRET_KEY_API) ?? "";
   }
   async saveSettings() {
-    await this.saveData(this.settings);
+    this.app.secretStorage.setSecret(SECRET_KEY_API, this.settings.apiKey);
+    const { apiKey, ...rest } = this.settings;
+    await this.saveData(rest);
   }
 };
