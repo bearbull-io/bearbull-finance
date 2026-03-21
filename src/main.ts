@@ -11,6 +11,14 @@ function getObsidianTheme(): string {
   return document.body.classList.contains("theme-dark") ? "dark" : "light";
 }
 
+function simpleHash(str: string): string {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) & 0xffffffff;
+  }
+  return `h${(hash >>> 0).toString(36)}`;
+}
+
 export default class BearBullPlugin extends Plugin {
   settings: BearBullSettings;
 
@@ -35,12 +43,15 @@ export default class BearBullPlugin extends Plugin {
         return;
       }
 
-      const lineStart = ctx.getSectionInfo(el)?.lineStart ?? 0;
+      const sectionInfo = ctx.getSectionInfo(el);
+      const lineKey = sectionInfo
+        ? String(sectionInfo.lineStart)
+        : simpleHash(source);
       const obsidianTheme = getObsidianTheme();
 
       for (let i = 0; i < results.length; i++) {
         const parsed = results[i];
-        const embedId = `${ctx.sourcePath}:${lineStart}:${i}`;
+        const embedId = `${ctx.sourcePath}:${lineKey}:${i}`;
         const container = el.createDiv();
 
         const child = renderEmbed(container, parsed, this.settings, obsidianTheme, embedId);
@@ -59,23 +70,19 @@ export default class BearBullPlugin extends Plugin {
     const data = await this.loadData();
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
 
-    // Migration: move apiKey from data.json → SecretStorage
     if (data?.apiKey) {
       this.app.secretStorage.setSecret(SECRET_KEY_API, data.apiKey);
       delete data.apiKey;
       await this.saveData(data);
     }
 
-    // Load apiKey from SecretStorage
     this.settings.apiKey = this.app.secretStorage.getSecret(SECRET_KEY_API) ?? "";
   }
 
   async saveSettings() {
-    // apiKey → SecretStorage only
     this.app.secretStorage.setSecret(SECRET_KEY_API, this.settings.apiKey);
 
-    // Everything else → data.json (exclude apiKey)
-    const { apiKey, ...rest } = this.settings;
+    const { apiKey: _, ...rest } = this.settings;
     await this.saveData(rest);
   }
 }

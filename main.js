@@ -49,14 +49,14 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "BearBull" });
-    const apiKeySetting = new import_obsidian.Setting(containerEl).setName("API Key").addText(
+    new import_obsidian.Setting(containerEl).setName("BearBull").setHeading();
+    const apiKeySetting = new import_obsidian.Setting(containerEl).setName("BearBull key").addText(
       (text) => text.setPlaceholder("bb_embed_...").setValue(this.plugin.settings.apiKey).then((t) => {
         t.inputEl.type = "password";
         t.inputEl.autocomplete = "off";
-        t.inputEl.addEventListener("blur", async () => {
+        t.inputEl.addEventListener("blur", () => {
           this.plugin.settings.apiKey = t.inputEl.value.trim();
-          await this.plugin.saveSettings();
+          void this.plugin.saveSettings();
         });
       })
     );
@@ -67,68 +67,68 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
     });
     apiKeySetting.descEl.appendText(".");
     new import_obsidian.Setting(containerEl).setName("Theme").setDesc("Chart color theme. 'Auto' matches your Obsidian theme.").addDropdown(
-      (dropdown) => dropdown.addOption("auto", "Auto").addOption("dark", "Dark").addOption("light", "Light").addOption("reading", "Reading").setValue(this.plugin.settings.theme).onChange(async (value) => {
+      (dropdown) => dropdown.addOption("auto", "Auto").addOption("dark", "Dark").addOption("light", "Light").addOption("reading", "Reading").setValue(this.plugin.settings.theme).onChange((value) => {
         this.plugin.settings.theme = value;
-        await this.plugin.saveSettings();
+        void this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Default Period").setDesc("Default time period for financial statements.").addDropdown(
-      (dropdown) => dropdown.addOption("A", "Annual").addOption("Q", "Quarterly").setValue(this.plugin.settings.defaultPeriod).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Default period").setDesc("Default time period for financial statements.").addDropdown(
+      (dropdown) => dropdown.addOption("A", "Annual").addOption("Q", "Quarterly").setValue(this.plugin.settings.defaultPeriod).onChange((value) => {
         this.plugin.settings.defaultPeriod = value;
-        await this.plugin.saveSettings();
+        void this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Show Time Frame Bar").setDesc("Show the annual/quarterly selector on charts.").addToggle(
-      (toggle) => toggle.setValue(this.plugin.settings.showTimeFrameBar).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Show time frame bar").setDesc("Show the annual/quarterly selector on charts.").addToggle(
+      (toggle) => toggle.setValue(this.plugin.settings.showTimeFrameBar).onChange((value) => {
         this.plugin.settings.showTimeFrameBar = value;
-        await this.plugin.saveSettings();
+        void this.plugin.saveSettings();
       })
     );
-    containerEl.createEl("h3", { text: "Defaults" });
-    new import_obsidian.Setting(containerEl).setName("Default Currency").setDesc("Convert values to this currency (e.g. USD, EUR). Leave blank for no conversion.").addText(
+    new import_obsidian.Setting(containerEl).setName("Defaults").setHeading();
+    new import_obsidian.Setting(containerEl).setName("Default currency").setDesc("Convert values to this currency (e.g. USD, EUR). Leave blank for no conversion.").addText(
       (text) => text.setPlaceholder("USD").setValue(this.plugin.settings.defaultCurrency).then((t) => {
-        t.inputEl.addEventListener("blur", async () => {
+        t.inputEl.addEventListener("blur", () => {
           this.plugin.settings.defaultCurrency = t.inputEl.value.trim().toUpperCase();
-          await this.plugin.saveSettings();
+          void this.plugin.saveSettings();
         });
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Date Format").setDesc("Date format used in financial statements and charts.").addDropdown(
-      (dropdown) => dropdown.addOption("yyyy-mm-dd", "yyyy-mm-dd").addOption("dd.mm.yyyy", "dd.mm.yyyy").addOption("dd/mm/yyyy", "dd/mm/yyyy").addOption("mm/dd/yyyy", "mm/dd/yyyy").setValue(this.plugin.settings.dateFormat).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Date format").setDesc("Date format used in financial statements and charts.").addDropdown(
+      (dropdown) => dropdown.addOption("yyyy-mm-dd", "yyyy-mm-dd").addOption("dd.mm.yyyy", "dd.mm.yyyy").addOption("dd/mm/yyyy", "dd/mm/yyyy").addOption("mm/dd/yyyy", "mm/dd/yyyy").setValue(this.plugin.settings.dateFormat).onChange((value) => {
         this.plugin.settings.dateFormat = value;
-        await this.plugin.saveSettings();
+        void this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Thousand Separator").setDesc("Character used to separate thousands in numbers.").addDropdown(
-      (dropdown) => dropdown.addOption("'", "Apostrophe (')").addOption(",", "Comma (,)").addOption(".", "Period (.)").setValue(this.plugin.settings.thousandSeparator).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Thousand separator").setDesc("Character used to separate thousands in numbers.").addDropdown(
+      (dropdown) => dropdown.addOption("'", "Apostrophe (')").addOption(",", "Comma (,)").addOption(".", "Period (.)").setValue(this.plugin.settings.thousandSeparator).onChange((value) => {
         this.plugin.settings.thousandSeparator = value;
-        await this.plugin.saveSettings();
+        void this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Default From Date").setDesc("Default start date. Supports: YYYY-MM-DD, today()-NY, today()-NM, today()-ND.").addText(
+    new import_obsidian.Setting(containerEl).setName("Default from date").setDesc("Default start date. Supports: YYYY-MM-DD, today()-NY, today()-NM, today()-ND.").addText(
       (text) => text.setValue(this.plugin.settings.defaultFromDate).then((t) => {
-        t.inputEl.addEventListener("blur", async () => {
+        t.inputEl.addEventListener("blur", () => {
           this.plugin.settings.defaultFromDate = t.inputEl.value.trim();
-          await this.plugin.saveSettings();
+          void this.plugin.saveSettings();
         });
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Default To Date").setDesc("Default end date.").addText(
+    new import_obsidian.Setting(containerEl).setName("Default to date").setDesc("Default end date.").addText(
       (text) => text.setValue(this.plugin.settings.defaultToDate).then((t) => {
-        t.inputEl.addEventListener("blur", async () => {
+        t.inputEl.addEventListener("blur", () => {
           this.plugin.settings.defaultToDate = t.inputEl.value.trim();
-          await this.plugin.saveSettings();
+          void this.plugin.saveSettings();
         });
       })
     );
-    containerEl.createEl("h3", { text: "Advanced" });
-    new import_obsidian.Setting(containerEl).setName("Chart Height").setDesc("Height in pixels for embeds.").addText(
+    new import_obsidian.Setting(containerEl).setName("Advanced").setHeading();
+    new import_obsidian.Setting(containerEl).setName("Chart height").setDesc("Height in pixels for embeds.").addText(
       (text) => text.setValue(String(this.plugin.settings.iframeHeight)).then((t) => {
-        t.inputEl.addEventListener("blur", async () => {
+        t.inputEl.addEventListener("blur", () => {
           const num = parseInt(t.inputEl.value, 10);
           if (!isNaN(num) && num > 0) {
             this.plugin.settings.iframeHeight = num;
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           }
         });
       })
@@ -493,6 +493,18 @@ function getResizeObserver() {
   }
   return resizeObserver;
 }
+var workspaceObserver = null;
+function observeWorkspace() {
+  if (workspaceObserver) return;
+  const ws = document.querySelector(".workspace");
+  if (!ws) return;
+  workspaceObserver = new MutationObserver(() => requestSync());
+  workspaceObserver.observe(ws, {
+    attributes: true,
+    attributeFilter: ["style", "class"],
+    subtree: true
+  });
+}
 var syncScheduled = false;
 function requestSync() {
   if (syncScheduled) return;
@@ -528,25 +540,27 @@ function syncPositions() {
   syncScheduled = false;
   for (const entry of cache.values()) {
     if (!entry.visible || !entry.placeholder) {
-      entry.wrapper.style.display = "none";
+      entry.wrapper.hide();
       continue;
     }
     const rect = entry.placeholder.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) {
-      entry.wrapper.style.display = "none";
+      entry.wrapper.hide();
       continue;
     }
     if (!entry.placeholder.isConnected || entry.placeholder.offsetParent === null) {
-      entry.wrapper.style.display = "none";
+      entry.wrapper.hide();
       continue;
     }
     const contentWidth = getContentWidth(entry.placeholder);
     const width = Math.min(rect.width, contentWidth, window.innerWidth - rect.left);
-    entry.wrapper.style.display = "block";
-    entry.wrapper.style.left = `${rect.left}px`;
-    entry.wrapper.style.top = `${rect.top}px`;
-    entry.wrapper.style.width = `${width}px`;
-    entry.wrapper.style.height = `${rect.height}px`;
+    entry.wrapper.show();
+    entry.wrapper.setCssStyles({
+      left: `${rect.left}px`,
+      top: `${rect.top}px`,
+      width: `${width}px`,
+      height: `${rect.height}px`
+    });
     const bounds = getClipBounds(entry.placeholder);
     if (bounds) {
       const clipTop = Math.max(0, bounds.top - rect.top);
@@ -554,12 +568,14 @@ function syncPositions() {
       const clipBottom = Math.max(0, rect.top + rect.height - bounds.bottom);
       const clipLeft = Math.max(0, bounds.left - rect.left);
       if (clipTop + clipBottom >= rect.height || clipLeft + clipRight >= width) {
-        entry.wrapper.style.display = "none";
+        entry.wrapper.hide();
         continue;
       }
-      entry.wrapper.style.clipPath = clipTop > 0 || clipRight > 0 || clipBottom > 0 || clipLeft > 0 ? `inset(${clipTop}px ${clipRight}px ${clipBottom}px ${clipLeft}px)` : "";
+      entry.wrapper.setCssStyles({
+        clipPath: clipTop > 0 || clipRight > 0 || clipBottom > 0 || clipLeft > 0 ? `inset(${clipTop}px ${clipRight}px ${clipBottom}px ${clipLeft}px)` : ""
+      });
     } else {
-      entry.wrapper.style.clipPath = "";
+      entry.wrapper.setCssStyles({ clipPath: "" });
     }
   }
 }
@@ -603,6 +619,17 @@ function onScrollMessage(e) {
     }
   }
 }
+function onErrorMessage(e) {
+  if (e.origin !== BASE_URL) return;
+  const d = e.data;
+  if (!d || d.type !== "bearbull-embed-error" || typeof d.error !== "string") return;
+  for (const [embedId, entry] of cache.entries()) {
+    if (entry.iframe.contentWindow === e.source) {
+      collapseToError(embedId, entry, d.error);
+      return;
+    }
+  }
+}
 var listenersAttached = false;
 function attachListeners() {
   if (listenersAttached) return;
@@ -613,6 +640,7 @@ function attachListeners() {
   document.addEventListener("keydown", onDocumentKeydown);
   window.addEventListener("message", onScrollMessage);
   window.addEventListener("message", onErrorMessage);
+  observeWorkspace();
 }
 function detachListeners() {
   if (!listenersAttached) return;
@@ -629,18 +657,13 @@ var BearBullEmbed = class extends import_obsidian2.MarkdownRenderChild {
     super(containerEl);
     this.embedId = embedId;
   }
-  /**
-   * Called by Obsidian when the code block container is about to be removed
-   * (e.g. scrolled out of viewport). We hide the iframe but keep it in the
-   * overlay — no DOM movement, no reload.
-   */
   onunload() {
     const entry = cache.get(this.embedId);
     if (!entry) return;
     if (entry.placeholder) resizeObserver?.unobserve(entry.placeholder);
     entry.visible = false;
     entry.placeholder = null;
-    entry.wrapper.style.display = "none";
+    entry.wrapper.hide();
   }
 };
 function renderEmbed(container, parsed, settings, obsidianTheme, embedId) {
@@ -661,7 +684,7 @@ function renderEmbed(container, parsed, settings, obsidianTheme, embedId) {
   const child = new BearBullEmbed(container, embedId);
   const placeholder = container.createDiv({ cls: "bearbull-embed-placeholder" });
   placeholder.dataset.bearbullId = embedId;
-  placeholder.style.height = `${height}px`;
+  placeholder.setCssStyles({ height: `${height}px` });
   const cached = cache.get(embedId);
   if (cached && cached.url === url) {
     cached.visible = true;
@@ -687,11 +710,10 @@ function renderEmbed(container, parsed, settings, obsidianTheme, embedId) {
     const ol = getOverlay();
     const wrapper = document.createElement("div");
     wrapper.className = "bearbull-iframe-wrapper";
-    wrapper.style.display = "none";
+    wrapper.hide();
     const iframe = document.createElement("iframe");
     iframe.className = "bearbull-overlay-iframe";
     iframe.src = url;
-    iframe.style.background = "transparent";
     iframe.setAttribute("loading", "lazy");
     iframe.setAttribute("allowtransparency", "true");
     iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
@@ -756,6 +778,8 @@ function onLayoutChange() {
   requestSync();
 }
 function cleanupOverlay() {
+  workspaceObserver?.disconnect();
+  workspaceObserver = null;
   resizeObserver?.disconnect();
   resizeObserver = null;
   cache.clear();
@@ -771,24 +795,13 @@ function showError(loadingEl) {
   loadingEl.classList.add("bearbull-embed-error");
   loadingEl.classList.remove("bearbull-embed-loading");
   const placeholder = loadingEl.parentElement;
-  if (placeholder) placeholder.style.height = "";
-}
-function onErrorMessage(e) {
-  if (e.origin !== BASE_URL) return;
-  const d = e.data;
-  if (!d || d.type !== "bearbull-embed-error" || typeof d.error !== "string") return;
-  for (const [embedId, entry] of cache.entries()) {
-    if (entry.iframe.contentWindow === e.source) {
-      collapseToError(embedId, entry, d.error);
-      return;
-    }
-  }
+  if (placeholder) placeholder.setCssStyles({ height: "" });
 }
 function collapseToError(embedId, entry, message) {
   entry.wrapper.remove();
   cache.delete(embedId);
   if (entry.placeholder) {
-    entry.placeholder.style.height = "";
+    entry.placeholder.setCssStyles({ height: "" });
     entry.placeholder.textContent = "";
     const errorEl = document.createElement("div");
     errorEl.className = "bearbull-embed-error";
@@ -798,9 +811,16 @@ function collapseToError(embedId, entry, message) {
 }
 
 // src/main.ts
-var SECRET_KEY_API = "api-key";
+var SECRET_KEY_API = "bearbull-key";
 function getObsidianTheme() {
   return document.body.classList.contains("theme-dark") ? "dark" : "light";
+}
+function simpleHash(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) + hash + str.charCodeAt(i) & 4294967295;
+  }
+  return `h${(hash >>> 0).toString(36)}`;
 }
 var BearBullPlugin = class extends import_obsidian3.Plugin {
   async onload() {
@@ -818,11 +838,12 @@ var BearBullPlugin = class extends import_obsidian3.Plugin {
         el.createDiv({ cls: "bearbull-embed-error", text: "Invalid bb block" });
         return;
       }
-      const lineStart = ctx.getSectionInfo(el)?.lineStart ?? 0;
+      const sectionInfo = ctx.getSectionInfo(el);
+      const lineKey = sectionInfo ? String(sectionInfo.lineStart) : simpleHash(source);
       const obsidianTheme = getObsidianTheme();
       for (let i = 0; i < results.length; i++) {
         const parsed = results[i];
-        const embedId = `${ctx.sourcePath}:${lineStart}:${i}`;
+        const embedId = `${ctx.sourcePath}:${lineKey}:${i}`;
         const container = el.createDiv();
         const child = renderEmbed(container, parsed, this.settings, obsidianTheme, embedId);
         if (child) {
@@ -846,7 +867,7 @@ var BearBullPlugin = class extends import_obsidian3.Plugin {
   }
   async saveSettings() {
     this.app.secretStorage.setSecret(SECRET_KEY_API, this.settings.apiKey);
-    const { apiKey, ...rest } = this.settings;
+    const { apiKey: _, ...rest } = this.settings;
     await this.saveData(rest);
   }
 };

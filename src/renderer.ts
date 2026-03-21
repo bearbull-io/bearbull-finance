@@ -21,7 +21,7 @@ function getOverlay(): HTMLDivElement {
 }
 
 // ---------------------------------------------------------------------------
-// Cache: embedId → { iframe, url, loaded, visible, placeholder }
+// Cache: embedId → CacheEntry
 // ---------------------------------------------------------------------------
 
 const TABLE_TYPES = new Set([
@@ -45,12 +45,10 @@ interface CacheEntry {
 
 const cache = new Map<string, CacheEntry>();
 
-/** Track which embedIds had a successful HEAD check so we skip it on re-render */
 const verifiedHosts = new Set<string>();
 
 // ---------------------------------------------------------------------------
-// ResizeObserver — triggers sync when any placeholder's container resizes
-// (sidebar toggle, pane drag-resize, CSS transitions, etc.)
+// Observers
 // ---------------------------------------------------------------------------
 
 let resizeObserver: ResizeObserver | null = null;
@@ -60,6 +58,20 @@ function getResizeObserver(): ResizeObserver {
     resizeObserver = new ResizeObserver(() => requestSync());
   }
   return resizeObserver;
+}
+
+let workspaceObserver: MutationObserver | null = null;
+
+function observeWorkspace(): void {
+  if (workspaceObserver) return;
+  const ws = document.querySelector(".workspace");
+  if (!ws) return;
+  workspaceObserver = new MutationObserver(() => requestSync());
+  workspaceObserver.observe(ws, {
+    attributes: true,
+    attributeFilter: ["style", "class"],
+    subtree: true,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -74,12 +86,9 @@ function requestSync(): void {
   requestAnimationFrame(syncPositions);
 }
 
-/** Resolve the max width the embed should occupy */
 function getContentWidth(el: HTMLElement): number {
-  // Live preview: .cm-sizer is constrained by max-width: var(--file-line-width)
-  // Reading mode: .markdown-preview-sizer is similarly constrained
   for (const sel of [".cm-sizer", ".cm-content", ".markdown-preview-sizer"]) {
-    const ancestor = el.closest(sel) as HTMLElement | null;
+    const ancestor = el.closest<HTMLElement>(sel);
     if (ancestor) {
       const style = getComputedStyle(ancestor);
       const pl = parseFloat(style.paddingLeft) || 0;
@@ -89,7 +98,6 @@ function getContentWidth(el: HTMLElement): number {
     }
   }
 
-  // Fallback: read --file-line-width directly from computed style
   const flw = getComputedStyle(el).getPropertyValue("--file-line-width").trim();
   if (flw) {
     const px = parseFloat(flw);
@@ -99,10 +107,9 @@ function getContentWidth(el: HTMLElement): number {
   return window.innerWidth;
 }
 
-/** Find the scrollable content bounds so we can clip iframes that overflow */
 function getClipBounds(el: HTMLElement): DOMRect | null {
   for (const sel of [".cm-scroller", ".markdown-preview-view"]) {
-    const ancestor = el.closest(sel) as HTMLElement | null;
+    const ancestor = el.closest<HTMLElement>(sel);
     if (ancestor) return ancestor.getBoundingClientRect();
   }
   return null;
@@ -113,34 +120,33 @@ function syncPositions(): void {
 
   for (const entry of cache.values()) {
     if (!entry.visible || !entry.placeholder) {
-      entry.wrapper.style.display = "none";
+      entry.wrapper.hide();
       continue;
     }
 
     const rect = entry.placeholder.getBoundingClientRect();
 
     if (rect.width === 0 || rect.height === 0) {
-      entry.wrapper.style.display = "none";
+      entry.wrapper.hide();
       continue;
     }
 
-    // Placeholder hidden or detached (e.g. tab switched away)
     if (!entry.placeholder.isConnected || entry.placeholder.offsetParent === null) {
-      entry.wrapper.style.display = "none";
+      entry.wrapper.hide();
       continue;
     }
 
-    // Clamp width to the readable content area
     const contentWidth = getContentWidth(entry.placeholder);
     const width = Math.min(rect.width, contentWidth, window.innerWidth - rect.left);
 
-    entry.wrapper.style.display = "block";
-    entry.wrapper.style.left = `${rect.left}px`;
-    entry.wrapper.style.top = `${rect.top}px`;
-    entry.wrapper.style.width = `${width}px`;
-    entry.wrapper.style.height = `${rect.height}px`;
+    entry.wrapper.show();
+    entry.wrapper.setCssStyles({
+      left: `${rect.left}px`,
+      top: `${rect.top}px`,
+      width: `${width}px`,
+      height: `${rect.height}px`,
+    });
 
-    // Clip portions that extend outside the scrollable content area
     const bounds = getClipBounds(entry.placeholder);
     if (bounds) {
       const clipTop = Math.max(0, bounds.top - rect.top);
@@ -149,16 +155,17 @@ function syncPositions(): void {
       const clipLeft = Math.max(0, bounds.left - rect.left);
 
       if (clipTop + clipBottom >= rect.height || clipLeft + clipRight >= width) {
-        entry.wrapper.style.display = "none";
+        entry.wrapper.hide();
         continue;
       }
 
-      entry.wrapper.style.clipPath =
-        (clipTop > 0 || clipRight > 0 || clipBottom > 0 || clipLeft > 0)
+      entry.wrapper.setCssStyles({
+        clipPath: (clipTop > 0 || clipRight > 0 || clipBottom > 0 || clipLeft > 0)
           ? `inset(${clipTop}px ${clipRight}px ${clipBottom}px ${clipLeft}px)`
-          : "";
+          : "",
+      });
     } else {
-      entry.wrapper.style.clipPath = "";
+      entry.wrapper.setCssStyles({ clipPath: "" });
     }
   }
 }
@@ -167,7 +174,6 @@ function syncPositions(): void {
 // Scroll guard helpers
 // ---------------------------------------------------------------------------
 
-/** Walk up from an element to find the nearest scrollable ancestor */
 function findScrollParent(el: HTMLElement | null): HTMLElement | null {
   let current = el?.parentElement ?? null;
   while (current) {
@@ -180,7 +186,6 @@ function findScrollParent(el: HTMLElement | null): HTMLElement | null {
   return null;
 }
 
-/** Remove .interactive from all guards, re-enabling scroll protection */
 function deactivateAllGuards(): void {
   for (const entry of cache.values()) {
     entry.guard?.classList.remove("interactive");
@@ -188,7 +193,6 @@ function deactivateAllGuards(): void {
 }
 
 function onDocumentMousedown(e: MouseEvent): void {
-  // If click is inside an active (interactive) wrapper, leave it active
   for (const entry of cache.values()) {
     if (entry.guard?.classList.contains("interactive") && entry.wrapper.contains(e.target as Node)) {
       return;
@@ -213,7 +217,7 @@ function onScrollMessage(e: MessageEvent): void {
 
   for (const entry of cache.values()) {
     if (entry.iframe.contentWindow === e.source) {
-      if (entry.isTable) return; // guard handles tables
+      if (entry.isTable) return;
       const sp = findScrollParent(entry.placeholder);
       if (sp) sp.scrollBy({ top: d.deltaY, left: d.deltaX });
       return;
@@ -221,26 +225,37 @@ function onScrollMessage(e: MessageEvent): void {
   }
 }
 
+function onErrorMessage(e: MessageEvent): void {
+  if (e.origin !== BASE_URL) return;
+  const d = e.data;
+  if (!d || d.type !== "bearbull-embed-error" || typeof d.error !== "string") return;
+
+  for (const [embedId, entry] of cache.entries()) {
+    if (entry.iframe.contentWindow === e.source) {
+      collapseToError(embedId, entry, d.error);
+      return;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Listeners — attached once when the overlay is created
+// ---------------------------------------------------------------------------
+
 let listenersAttached = false;
 
 function attachListeners(): void {
   if (listenersAttached) return;
   listenersAttached = true;
 
-  // Capture phase scroll — fires for any scrollable container in Obsidian
   document.addEventListener("scroll", requestSync, true);
   window.addEventListener("resize", requestSync);
-
-  // Guard deactivation listeners
   document.addEventListener("mousedown", onDocumentMousedown, true);
   document.addEventListener("keydown", onDocumentKeydown);
-
-  // postMessage bridge for iframe scroll forwarding
   window.addEventListener("message", onScrollMessage);
-
-  // postMessage bridge for iframe-reported errors (invalid API key, etc.)
   window.addEventListener("message", onErrorMessage);
+
+  observeWorkspace();
 }
 
 function detachListeners(): void {
@@ -267,11 +282,6 @@ export class BearBullEmbed extends MarkdownRenderChild {
     this.embedId = embedId;
   }
 
-  /**
-   * Called by Obsidian when the code block container is about to be removed
-   * (e.g. scrolled out of viewport). We hide the iframe but keep it in the
-   * overlay — no DOM movement, no reload.
-   */
   onunload(): void {
     const entry = cache.get(this.embedId);
     if (!entry) return;
@@ -279,7 +289,7 @@ export class BearBullEmbed extends MarkdownRenderChild {
     if (entry.placeholder) resizeObserver?.unobserve(entry.placeholder);
     entry.visible = false;
     entry.placeholder = null;
-    entry.wrapper.style.display = "none";
+    entry.wrapper.hide();
   }
 }
 
@@ -297,14 +307,12 @@ export function renderEmbed(
   container.empty();
   container.classList.add("bearbull-embed-container");
 
-  // Validate API key
   if (!settings.apiKey) {
     const errorEl = container.createDiv({ cls: "bearbull-embed-error" });
     errorEl.setText("BearBull API key not configured. Set it in Settings → BearBull.");
     return null;
   }
 
-  // Iframes are blocked on mobile (Capacitor/WKWebView) — show info message
   if (Platform.isMobile) {
     const info = container.createDiv({ cls: "bearbull-embed-info" });
     info.setText("BearBull embeds are only available on desktop.");
@@ -316,10 +324,9 @@ export function renderEmbed(
 
   const child = new BearBullEmbed(container, embedId);
 
-  // Create placeholder that reserves space in the document flow
   const placeholder = container.createDiv({ cls: "bearbull-embed-placeholder" });
   placeholder.dataset.bearbullId = embedId;
-  placeholder.style.height = `${height}px`;
+  placeholder.setCssStyles({ height: `${height}px` });
 
   // --- Cache hit: reattach to new placeholder --------------------------------
   const cached = cache.get(embedId);
@@ -355,20 +362,17 @@ export function renderEmbed(
   const createIframe = () => {
     const ol = getOverlay();
 
-    // Wrapper holds both iframe and guard
     const wrapper = document.createElement("div");
     wrapper.className = "bearbull-iframe-wrapper";
-    wrapper.style.display = "none"; // hidden until load
+    wrapper.hide();
 
     const iframe = document.createElement("iframe");
     iframe.className = "bearbull-overlay-iframe";
     iframe.src = url;
-    iframe.style.background = "transparent";
     iframe.setAttribute("loading", "lazy");
     iframe.setAttribute("allowtransparency", "true");
     iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
 
-    // Scroll guard — only for table embeds
     let guard: HTMLDivElement | null = null;
     if (isTable) {
       guard = document.createElement("div");
@@ -409,7 +413,7 @@ export function renderEmbed(
       loadingEl.remove();
       entry.loaded = true;
       verifiedHosts.add(BASE_URL);
-      requestSync(); // show and position now that it's loaded
+      requestSync();
     });
 
     iframe.addEventListener("error", () => {
@@ -421,7 +425,6 @@ export function renderEmbed(
     ol.appendChild(wrapper);
   };
 
-  // Skip HEAD check if we already verified this host during this session
   if (verifiedHosts.has(BASE_URL)) {
     createIframe();
   } else {
@@ -437,7 +440,7 @@ export function renderEmbed(
 }
 
 // ---------------------------------------------------------------------------
-// Active-leaf-change — called when Obsidian switches tabs
+// Active-leaf-change / layout-change
 // ---------------------------------------------------------------------------
 
 export function onActiveLeafChange(): void {
@@ -453,6 +456,8 @@ export function onLayoutChange(): void {
 // ---------------------------------------------------------------------------
 
 export function cleanupOverlay(): void {
+  workspaceObserver?.disconnect();
+  workspaceObserver = null;
   resizeObserver?.disconnect();
   resizeObserver = null;
   cache.clear();
@@ -472,22 +477,8 @@ function showError(loadingEl: HTMLElement): void {
   loadingEl.setText("Could not connect to BearBull");
   loadingEl.classList.add("bearbull-embed-error");
   loadingEl.classList.remove("bearbull-embed-loading");
-  // Collapse placeholder so error shows at natural compact size
   const placeholder = loadingEl.parentElement;
-  if (placeholder) placeholder.style.height = "";
-}
-
-function onErrorMessage(e: MessageEvent): void {
-  if (e.origin !== BASE_URL) return;
-  const d = e.data;
-  if (!d || d.type !== "bearbull-embed-error" || typeof d.error !== "string") return;
-
-  for (const [embedId, entry] of cache.entries()) {
-    if (entry.iframe.contentWindow === e.source) {
-      collapseToError(embedId, entry, d.error);
-      return;
-    }
-  }
+  if (placeholder) placeholder.setCssStyles({ height: "" });
 }
 
 function collapseToError(embedId: string, entry: CacheEntry, message: string): void {
@@ -495,7 +486,7 @@ function collapseToError(embedId: string, entry: CacheEntry, message: string): v
   cache.delete(embedId);
 
   if (entry.placeholder) {
-    entry.placeholder.style.height = "";
+    entry.placeholder.setCssStyles({ height: "" });
     entry.placeholder.textContent = "";
     const errorEl = document.createElement("div");
     errorEl.className = "bearbull-embed-error";

@@ -13,10 +13,10 @@ export class BearBullSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: "BearBull" });
+    new Setting(containerEl).setName("BearBull").setHeading();
 
     const apiKeySetting = new Setting(containerEl)
-      .setName("BearBull Key")
+      .setName("BearBull key")
       .addText((text) =>
         text
           .setPlaceholder("bb_embed_...")
@@ -24,9 +24,9 @@ export class BearBullSettingTab extends PluginSettingTab {
           .then((t) => {
             t.inputEl.type = "password";
             t.inputEl.autocomplete = "off";
-            t.inputEl.addEventListener("blur", async () => {
+            t.inputEl.addEventListener("blur", () => {
               this.plugin.settings.apiKey = t.inputEl.value.trim();
-              await this.plugin.saveSettings();
+              void this.plugin.saveSettings();
             });
           })
       );
@@ -47,58 +47,57 @@ export class BearBullSettingTab extends PluginSettingTab {
           .addOption("light", "Light")
           .addOption("reading", "Reading")
           .setValue(this.plugin.settings.theme)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.theme = value as "dark" | "light" | "reading" | "auto";
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
     new Setting(containerEl)
-      .setName("Default Period")
+      .setName("Default period")
       .setDesc("Default time period for financial statements.")
       .addDropdown((dropdown) =>
         dropdown
           .addOption("A", "Annual")
           .addOption("Q", "Quarterly")
           .setValue(this.plugin.settings.defaultPeriod)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.defaultPeriod = value as "A" | "Q";
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
     new Setting(containerEl)
-      .setName("Show Time Frame Bar")
+      .setName("Show time frame bar")
       .setDesc("Show the annual/quarterly selector on charts.")
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.showTimeFrameBar)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.showTimeFrameBar = value;
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
-    // --- Defaults ---
-    containerEl.createEl("h3", { text: "Defaults" });
+    new Setting(containerEl).setName("Defaults").setHeading();
 
     new Setting(containerEl)
-      .setName("Default Currency")
+      .setName("Default currency")
       .setDesc("Convert values to this currency (e.g. USD, EUR). Leave blank for no conversion.")
       .addText((text) =>
         text
           .setPlaceholder("USD")
           .setValue(this.plugin.settings.defaultCurrency)
           .then((t) => {
-            t.inputEl.addEventListener("blur", async () => {
+            t.inputEl.addEventListener("blur", () => {
               this.plugin.settings.defaultCurrency = t.inputEl.value.trim().toUpperCase();
-              await this.plugin.saveSettings();
+              void this.plugin.saveSettings();
             });
           })
       );
 
     new Setting(containerEl)
-      .setName("Date Format")
+      .setName("Date format")
       .setDesc("Date format used in financial statements and charts.")
       .addDropdown((dropdown) =>
         dropdown
@@ -107,14 +106,14 @@ export class BearBullSettingTab extends PluginSettingTab {
           .addOption("dd/mm/yyyy", "dd/mm/yyyy")
           .addOption("mm/dd/yyyy", "mm/dd/yyyy")
           .setValue(this.plugin.settings.dateFormat)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.dateFormat = value;
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
     new Setting(containerEl)
-      .setName("Thousand Separator")
+      .setName("Thousand separator")
       .setDesc("Character used to separate thousands in numbers.")
       .addDropdown((dropdown) =>
         dropdown
@@ -122,55 +121,54 @@ export class BearBullSettingTab extends PluginSettingTab {
           .addOption(",", "Comma (,)")
           .addOption(".", "Period (.)")
           .setValue(this.plugin.settings.thousandSeparator)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.thousandSeparator = value;
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
     new Setting(containerEl)
-      .setName("Default From Date")
+      .setName("Default from date")
       .setDesc("Default start date. Supports: YYYY-MM-DD, today()-NY, today()-NM, today()-ND.")
       .addText((text) =>
         text
           .setValue(this.plugin.settings.defaultFromDate)
           .then((t) => {
-            t.inputEl.addEventListener("blur", async () => {
+            t.inputEl.addEventListener("blur", () => {
               this.plugin.settings.defaultFromDate = t.inputEl.value.trim();
-              await this.plugin.saveSettings();
+              void this.plugin.saveSettings();
             });
           })
       );
 
     new Setting(containerEl)
-      .setName("Default To Date")
+      .setName("Default to date")
       .setDesc("Default end date.")
       .addText((text) =>
         text
           .setValue(this.plugin.settings.defaultToDate)
           .then((t) => {
-            t.inputEl.addEventListener("blur", async () => {
+            t.inputEl.addEventListener("blur", () => {
               this.plugin.settings.defaultToDate = t.inputEl.value.trim();
-              await this.plugin.saveSettings();
+              void this.plugin.saveSettings();
             });
           })
       );
 
-    // --- Advanced ---
-    containerEl.createEl("h3", { text: "Advanced" });
+    new Setting(containerEl).setName("Advanced").setHeading();
 
     new Setting(containerEl)
-      .setName("Chart Height")
+      .setName("Chart height")
       .setDesc("Height in pixels for embeds.")
       .addText((text) =>
         text
           .setValue(String(this.plugin.settings.iframeHeight))
           .then((t) => {
-            t.inputEl.addEventListener("blur", async () => {
+            t.inputEl.addEventListener("blur", () => {
               const num = parseInt(t.inputEl.value, 10);
               if (!isNaN(num) && num > 0) {
                 this.plugin.settings.iframeHeight = num;
-                await this.plugin.saveSettings();
+                void this.plugin.saveSettings();
               }
             });
           })
