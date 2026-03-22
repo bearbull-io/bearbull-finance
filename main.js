@@ -62,10 +62,15 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
     );
     apiKeySetting.descEl.appendText("Your embed API key. Get one at ");
     apiKeySetting.descEl.createEl("a", {
-      text: "www.bearbull.io",
-      href: "https://www.bearbull.io"
+      text: "bearbull.io/account",
+      href: "https://www.bearbull.io/account/obsidianPlugin"
     });
-    apiKeySetting.descEl.appendText(".");
+    apiKeySetting.descEl.appendText(". See the ");
+    apiKeySetting.descEl.createEl("a", {
+      text: "Obsidian guide",
+      href: "https://www.bearbull.io/blog/Guide/Obsidian-Note"
+    });
+    apiKeySetting.descEl.appendText(" to get started.");
     new import_obsidian.Setting(containerEl).setName("Theme").setDesc("Chart color theme. 'Auto' matches your Obsidian theme.").addDropdown(
       (dropdown) => dropdown.addOption("auto", "Auto").addOption("dark", "Dark").addOption("light", "Light").addOption("reading", "Reading").setValue(this.plugin.settings.theme).onChange((value) => {
         this.plugin.settings.theme = value;
