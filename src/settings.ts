@@ -32,10 +32,15 @@ export class BearBullSettingTab extends PluginSettingTab {
       );
     apiKeySetting.descEl.appendText("Your embed API key. Get one at ");
     apiKeySetting.descEl.createEl("a", {
-      text: "www.bearbull.io",
-      href: "https://www.bearbull.io",
+      text: "bearbull.io/account",
+      href: "https://www.bearbull.io/account/obsidianPlugin",
     });
-    apiKeySetting.descEl.appendText(".");
+    apiKeySetting.descEl.appendText(". See the ");
+    apiKeySetting.descEl.createEl("a", {
+      text: "Obsidian guide",
+      href: "https://www.bearbull.io/blog/Guide/Obsidian-Note",
+    });
+    apiKeySetting.descEl.appendText(" to get started.");
 
     new Setting(containerEl)
       .setName("Theme")
