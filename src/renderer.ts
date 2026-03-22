@@ -309,13 +309,13 @@ export function renderEmbed(
 
   if (!settings.apiKey) {
     const errorEl = container.createDiv({ cls: "bearbull-embed-error" });
-    errorEl.setText("BearBull API key not configured. Set it in Settings → BearBull.");
+    errorEl.setText("API key not configured. Set it in settings.");
     return null;
   }
 
   if (Platform.isMobile) {
     const info = container.createDiv({ cls: "bearbull-embed-info" });
-    info.setText("BearBull embeds are only available on desktop.");
+    info.setText("Embeds are only available on desktop.");
     return null;
   }
 
@@ -337,7 +337,7 @@ export function renderEmbed(
 
     if (!cached.loaded) {
       const loadingEl = placeholder.createDiv({ cls: "bearbull-embed-loading" });
-      loadingEl.setText("Loading BearBull chart...");
+      loadingEl.setText("Loading chart...");
       cached.iframe.addEventListener("load", () => loadingEl.remove(), { once: true });
     }
 
@@ -355,7 +355,7 @@ export function renderEmbed(
   attachListeners();
 
   const loadingEl = placeholder.createDiv({ cls: "bearbull-embed-loading" });
-  loadingEl.setText("Loading BearBull chart...");
+  loadingEl.setText("Loading chart...");
 
   const isTable = TABLE_TYPES.has(parsed.type);
 
@@ -474,7 +474,7 @@ export function cleanupOverlay(): void {
 // ---------------------------------------------------------------------------
 
 function showError(loadingEl: HTMLElement): void {
-  loadingEl.setText("Could not connect to BearBull");
+  loadingEl.setText("Could not connect to server");
   loadingEl.classList.add("bearbull-embed-error");
   loadingEl.classList.remove("bearbull-embed-loading");
   const placeholder = loadingEl.parentElement;

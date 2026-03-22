@@ -49,8 +49,8 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName("BearBull").setHeading();
-    const apiKeySetting = new import_obsidian.Setting(containerEl).setName("BearBull key").addText(
+    new import_obsidian.Setting(containerEl).setName("General").setHeading();
+    const apiKeySetting = new import_obsidian.Setting(containerEl).setName("API key").addText(
       (text) => text.setPlaceholder("bb_embed_...").setValue(this.plugin.settings.apiKey).then((t) => {
         t.inputEl.type = "password";
         t.inputEl.autocomplete = "off";
@@ -60,7 +60,7 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
         });
       })
     );
-    apiKeySetting.descEl.appendText("Your BearBull embed API key. Get one at ");
+    apiKeySetting.descEl.appendText("Your embed API key. Get one at ");
     apiKeySetting.descEl.createEl("a", {
       text: "www.bearbull.io",
       href: "https://www.bearbull.io"
@@ -671,12 +671,12 @@ function renderEmbed(container, parsed, settings, obsidianTheme, embedId) {
   container.classList.add("bearbull-embed-container");
   if (!settings.apiKey) {
     const errorEl = container.createDiv({ cls: "bearbull-embed-error" });
-    errorEl.setText("BearBull API key not configured. Set it in Settings \u2192 BearBull.");
+    errorEl.setText("API key not configured. Set it in settings.");
     return null;
   }
   if (import_obsidian2.Platform.isMobile) {
     const info = container.createDiv({ cls: "bearbull-embed-info" });
-    info.setText("BearBull embeds are only available on desktop.");
+    info.setText("Embeds are only available on desktop.");
     return null;
   }
   const url = buildEmbedUrl(parsed, settings, obsidianTheme);
@@ -692,7 +692,7 @@ function renderEmbed(container, parsed, settings, obsidianTheme, embedId) {
     getResizeObserver().observe(placeholder);
     if (!cached.loaded) {
       const loadingEl2 = placeholder.createDiv({ cls: "bearbull-embed-loading" });
-      loadingEl2.setText("Loading BearBull chart...");
+      loadingEl2.setText("Loading chart...");
       cached.iframe.addEventListener("load", () => loadingEl2.remove(), { once: true });
     }
     requestSync();
@@ -704,7 +704,7 @@ function renderEmbed(container, parsed, settings, obsidianTheme, embedId) {
   }
   attachListeners();
   const loadingEl = placeholder.createDiv({ cls: "bearbull-embed-loading" });
-  loadingEl.setText("Loading BearBull chart...");
+  loadingEl.setText("Loading chart...");
   const isTable = TABLE_TYPES.has(parsed.type);
   const createIframe = () => {
     const ol = getOverlay();
@@ -791,7 +791,7 @@ function cleanupOverlay() {
   }
 }
 function showError(loadingEl) {
-  loadingEl.setText("Could not connect to BearBull");
+  loadingEl.setText("Could not connect to server");
   loadingEl.classList.add("bearbull-embed-error");
   loadingEl.classList.remove("bearbull-embed-loading");
   const placeholder = loadingEl.parentElement;
@@ -867,7 +867,7 @@ var BearBullPlugin = class extends import_obsidian3.Plugin {
   }
   async saveSettings() {
     this.app.secretStorage.setSecret(SECRET_KEY_API, this.settings.apiKey);
-    const { apiKey: _, ...rest } = this.settings;
+    const { apiKey: _apiKey, ...rest } = this.settings;
     await this.saveData(rest);
   }
 };

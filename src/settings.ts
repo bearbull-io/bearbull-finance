@@ -13,10 +13,10 @@ export class BearBullSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    new Setting(containerEl).setName("BearBull").setHeading();
+    new Setting(containerEl).setName("General").setHeading();
 
     const apiKeySetting = new Setting(containerEl)
-      .setName("BearBull key")
+      .setName("API key")
       .addText((text) =>
         text
           .setPlaceholder("bb_embed_...")
@@ -30,7 +30,7 @@ export class BearBullSettingTab extends PluginSettingTab {
             });
           })
       );
-    apiKeySetting.descEl.appendText("Your BearBull embed API key. Get one at ");
+    apiKeySetting.descEl.appendText("Your embed API key. Get one at ");
     apiKeySetting.descEl.createEl("a", {
       text: "www.bearbull.io",
       href: "https://www.bearbull.io",
