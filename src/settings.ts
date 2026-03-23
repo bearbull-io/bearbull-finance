@@ -13,13 +13,11 @@ export class BearBullSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    new Setting(containerEl).setName("General").setHeading();
-
     const apiKeySetting = new Setting(containerEl)
       .setName("API key")
       .addText((text) =>
         text
-          .setPlaceholder("bb_embed_...")
+          .setPlaceholder("Enter your embed API key")
           .setValue(this.plugin.settings.apiKey)
           .then((t) => {
             t.inputEl.type = "password";
@@ -44,7 +42,7 @@ export class BearBullSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Theme")
-      .setDesc("Chart color theme. 'Auto' matches your Obsidian theme.")
+      .setDesc("Color theme for embedded charts.")
       .addDropdown((dropdown) =>
         dropdown
           .addOption("auto", "Auto")
@@ -88,7 +86,7 @@ export class BearBullSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Default currency")
-      .setDesc("Convert values to this currency (e.g. USD, EUR). Leave blank for no conversion.")
+      .setDesc("Currency code for value conversion. Leave blank to skip.")
       .addText((text) =>
         text
           .setPlaceholder("USD")
@@ -106,10 +104,10 @@ export class BearBullSettingTab extends PluginSettingTab {
       .setDesc("Date format used in financial statements and charts.")
       .addDropdown((dropdown) =>
         dropdown
-          .addOption("yyyy-mm-dd", "yyyy-mm-dd")
-          .addOption("dd.mm.yyyy", "dd.mm.yyyy")
-          .addOption("dd/mm/yyyy", "dd/mm/yyyy")
-          .addOption("mm/dd/yyyy", "mm/dd/yyyy")
+          .addOption("yyyy-mm-dd", "YYYY-MM-DD")
+          .addOption("dd.mm.yyyy", "DD.MM.YYYY")
+          .addOption("dd/mm/yyyy", "DD/MM/YYYY")
+          .addOption("mm/dd/yyyy", "MM/DD/YYYY")
           .setValue(this.plugin.settings.dateFormat)
           .onChange((value) => {
             this.plugin.settings.dateFormat = value;
@@ -134,7 +132,7 @@ export class BearBullSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Default from date")
-      .setDesc("Default start date. Supports: YYYY-MM-DD, today()-NY, today()-NM, today()-ND.")
+      .setDesc("Start date for financial data in YYYY-MM-DD format or relative like today()-1Y.")
       .addText((text) =>
         text
           .setValue(this.plugin.settings.defaultFromDate)

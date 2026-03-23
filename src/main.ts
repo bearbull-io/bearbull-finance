@@ -82,7 +82,8 @@ export default class BearBullPlugin extends Plugin {
   async saveSettings() {
     this.app.secretStorage.setSecret(SECRET_KEY_API, this.settings.apiKey);
 
-    const { apiKey: _apiKey, ...rest } = this.settings;
+    const rest = { ...this.settings } as Record<string, unknown>;
+    delete rest.apiKey;
     await this.saveData(rest);
   }
 }

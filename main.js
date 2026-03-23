@@ -49,9 +49,8 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName("General").setHeading();
     const apiKeySetting = new import_obsidian.Setting(containerEl).setName("API key").addText(
-      (text) => text.setPlaceholder("bb_embed_...").setValue(this.plugin.settings.apiKey).then((t) => {
+      (text) => text.setPlaceholder("Enter your embed API key").setValue(this.plugin.settings.apiKey).then((t) => {
         t.inputEl.type = "password";
         t.inputEl.autocomplete = "off";
         t.inputEl.addEventListener("blur", () => {
@@ -71,7 +70,7 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
       href: "https://www.bearbull.io/blog/Guide/Obsidian-Note"
     });
     apiKeySetting.descEl.appendText(" to get started.");
-    new import_obsidian.Setting(containerEl).setName("Theme").setDesc("Chart color theme. 'Auto' matches your Obsidian theme.").addDropdown(
+    new import_obsidian.Setting(containerEl).setName("Theme").setDesc("Color theme for embedded charts.").addDropdown(
       (dropdown) => dropdown.addOption("auto", "Auto").addOption("dark", "Dark").addOption("light", "Light").addOption("reading", "Reading").setValue(this.plugin.settings.theme).onChange((value) => {
         this.plugin.settings.theme = value;
         void this.plugin.saveSettings();
@@ -90,7 +89,7 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
       })
     );
     new import_obsidian.Setting(containerEl).setName("Defaults").setHeading();
-    new import_obsidian.Setting(containerEl).setName("Default currency").setDesc("Convert values to this currency (e.g. USD, EUR). Leave blank for no conversion.").addText(
+    new import_obsidian.Setting(containerEl).setName("Default currency").setDesc("Currency code for value conversion. Leave blank to skip.").addText(
       (text) => text.setPlaceholder("USD").setValue(this.plugin.settings.defaultCurrency).then((t) => {
         t.inputEl.addEventListener("blur", () => {
           this.plugin.settings.defaultCurrency = t.inputEl.value.trim().toUpperCase();
@@ -99,7 +98,7 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
       })
     );
     new import_obsidian.Setting(containerEl).setName("Date format").setDesc("Date format used in financial statements and charts.").addDropdown(
-      (dropdown) => dropdown.addOption("yyyy-mm-dd", "yyyy-mm-dd").addOption("dd.mm.yyyy", "dd.mm.yyyy").addOption("dd/mm/yyyy", "dd/mm/yyyy").addOption("mm/dd/yyyy", "mm/dd/yyyy").setValue(this.plugin.settings.dateFormat).onChange((value) => {
+      (dropdown) => dropdown.addOption("yyyy-mm-dd", "YYYY-MM-DD").addOption("dd.mm.yyyy", "DD.MM.YYYY").addOption("dd/mm/yyyy", "DD/MM/YYYY").addOption("mm/dd/yyyy", "MM/DD/YYYY").setValue(this.plugin.settings.dateFormat).onChange((value) => {
         this.plugin.settings.dateFormat = value;
         void this.plugin.saveSettings();
       })
@@ -110,7 +109,7 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
         void this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Default from date").setDesc("Default start date. Supports: YYYY-MM-DD, today()-NY, today()-NM, today()-ND.").addText(
+    new import_obsidian.Setting(containerEl).setName("Default from date").setDesc("Start date for financial data in YYYY-MM-DD format or relative like today()-1Y.").addText(
       (text) => text.setValue(this.plugin.settings.defaultFromDate).then((t) => {
         t.inputEl.addEventListener("blur", () => {
           this.plugin.settings.defaultFromDate = t.inputEl.value.trim();
@@ -872,7 +871,8 @@ var BearBullPlugin = class extends import_obsidian3.Plugin {
   }
   async saveSettings() {
     this.app.secretStorage.setSecret(SECRET_KEY_API, this.settings.apiKey);
-    const { apiKey: _apiKey, ...rest } = this.settings;
+    const rest = { ...this.settings };
+    delete rest.apiKey;
     await this.saveData(rest);
   }
 };
