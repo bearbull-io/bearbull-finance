@@ -132,7 +132,7 @@ export class BearBullSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Default from date")
-      .setDesc("Start date for financial data as an absolute or relative date (e.g. today()-1Y).")
+      .setDesc("Start date for financial data as an absolute or relative date (e.g. today()-1y).")
       .addText((text) =>
         text
           .setValue(this.plugin.settings.defaultFromDate)
