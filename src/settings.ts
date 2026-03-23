@@ -104,10 +104,10 @@ export class BearBullSettingTab extends PluginSettingTab {
       .setDesc("Date format used in financial statements and charts.")
       .addDropdown((dropdown) =>
         dropdown
-          .addOption("yyyy-mm-dd", "yyyy-mm-dd")
-          .addOption("dd.mm.yyyy", "dd.mm.yyyy")
-          .addOption("dd/mm/yyyy", "dd/mm/yyyy")
-          .addOption("mm/dd/yyyy", "mm/dd/yyyy")
+          .addOption("yyyy-mm-dd", "2024-01-31")
+          .addOption("dd.mm.yyyy", "31.01.2024")
+          .addOption("dd/mm/yyyy", "31/01/2024")
+          .addOption("mm/dd/yyyy", "01/31/2024")
           .setValue(this.plugin.settings.dateFormat)
           .onChange((value) => {
             this.plugin.settings.dateFormat = value;
@@ -132,7 +132,7 @@ export class BearBullSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Default from date")
-      .setDesc("Start date for financial data in yyyy-mm-dd format or relative like today()-1Y.")
+      .setDesc("Start date for financial data as an absolute or relative date (e.g. today()-1Y).")
       .addText((text) =>
         text
           .setValue(this.plugin.settings.defaultFromDate)
