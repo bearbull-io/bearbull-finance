@@ -98,7 +98,7 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
       })
     );
     new import_obsidian.Setting(containerEl).setName("Date format").setDesc("Date format used in financial statements and charts.").addDropdown(
-      (dropdown) => dropdown.addOption("yyyy-mm-dd", "YYYY-MM-DD").addOption("dd.mm.yyyy", "DD.MM.YYYY").addOption("dd/mm/yyyy", "DD/MM/YYYY").addOption("mm/dd/yyyy", "MM/DD/YYYY").setValue(this.plugin.settings.dateFormat).onChange((value) => {
+      (dropdown) => dropdown.addOption("yyyy-mm-dd", "yyyy-mm-dd").addOption("dd.mm.yyyy", "dd.mm.yyyy").addOption("dd/mm/yyyy", "dd/mm/yyyy").addOption("mm/dd/yyyy", "mm/dd/yyyy").setValue(this.plugin.settings.dateFormat).onChange((value) => {
         this.plugin.settings.dateFormat = value;
         void this.plugin.saveSettings();
       })
@@ -109,7 +109,7 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
         void this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Default from date").setDesc("Start date for financial data in YYYY-MM-DD format or relative like today()-1Y.").addText(
+    new import_obsidian.Setting(containerEl).setName("Default from date").setDesc("Start date for financial data in yyyy-mm-dd format or relative like today()-1Y.").addText(
       (text) => text.setValue(this.plugin.settings.defaultFromDate).then((t) => {
         t.inputEl.addEventListener("blur", () => {
           this.plugin.settings.defaultFromDate = t.inputEl.value.trim();
