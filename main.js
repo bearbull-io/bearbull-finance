@@ -109,7 +109,7 @@ var BearBullSettingTab = class extends import_obsidian.PluginSettingTab {
         void this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Default from date").setDesc("Start date for financial data as an absolute or relative date (e.g. today()-1y).").addText(
+    new import_obsidian.Setting(containerEl).setName("Default from date").setDesc("Start date for financial data as an absolute or relative date (such as today()-1y).").addText(
       (text) => text.setValue(this.plugin.settings.defaultFromDate).then((t) => {
         t.inputEl.addEventListener("blur", () => {
           this.plugin.settings.defaultFromDate = t.inputEl.value.trim();
